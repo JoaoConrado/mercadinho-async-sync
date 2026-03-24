@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mercadinho 24h</title>
+    <style>
+        :root { --primary: #007bff; --success: #28a745; --dark: #343a40; --bg: #f8f9fa; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        h2 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; color: var(--dark); }
+        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        button:hover { filter: brightness(0.9); }
+        button:active { transform: scale(0.98); }
+        input { padding: 10px; width: calc(100% - 24px); margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; }
+        
+        .badge-sync { background: #17a2b8; color: white; font-size: 11px; padding: 3px 8px; border-radius: 12px; vertical-align: middle; margin-left: 10px;}
+        .badge-async { background: #ffc107; color: black; font-size: 11px; padding: 3px 8px; border-radius: 12px; vertical-align: middle; margin-left: 10px;}
+        
+        .products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .product-item { border: 1px solid #eee; padding: 15px; border-radius: 8px; text-align: center; background: #fafafa; }
+        .product-item h3 { margin: 10px 0; font-size: 18px; }
+        
+        .hidden { display: none !important; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; }
+        th { background-color: #f1f1f1; }
+        
+        /* Layout adjustments for single column on small screens */
+        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: var(--dark); font-size: 2.5em; margin-bottom: 5px;">🛒 Mercadinho 24h</h1>
+        <p style="color: #666;">Demonstração de Arquitetura de Software: Síncrono vs Assíncrono</p>
+    </div>
+
+    <div class="container">
+        <!-- Lado Esquerdo: Interação do Usuário -->
+        <div>
+            <!-- TELA DE LOGIN -->
+            <div id="login-section" class="card">
+                <h2>Autenticação <span class="badge-sync">Síncrono (Instantâneo)</span></h2>
+                <p style="font-size: 14px; color: #555;">Processo leve em memória. A interface aguarda a resposta pois é imperceptível.</p>
+                <label>Usuário:</label>
+                <input type="text" id="username" value="mestre" placeholder="Digite 'mestre'">
+                <label>Senha:</label>
+                <input type="password" id="password" value="123" placeholder="Digite '123'">
+                <button onclick="fazerLogin()" style="width: 100%;">Entrar no Sistema</button>
+                <p id="login-error" style="color: red; font-size: 14px; display: none; margin-top: 10px;">Credenciais inválidas!</p>
+            </div>
+
+            <!-- TELA DA LOJA (Oculta até logar) -->
+            <div id="store-section" class="card hidden">
+                <h2>Vitrine de Produtos <span class="badge-sync">Síncrono</span></h2>
+                <div class="products-grid">
+                    <div class="product-item">
+                        <div style="font-size: 40px;">🍎</div>
+                        <h3>Maçã Fuji</h3>
+                        <button onclick="addCarrinho('Maçã 🍎')" style="background: var(--success);">Adicionar</button>
+                    </div>
+                    <div class="product-item">
+                        <div style="font-size: 40px;">🍞</div>
+                        <h3>Pão Integral</h3>
+                        <button onclick="addCarrinho('Pão Integral 🍞')" style="background: var(--success);">Adicionar</button>
+                    </div>
+                    <div class="product-item">
+                        <div style="font-size: 40px;">☕</div>
+                        <h3>Café Premium</h3>
+                        <button onclick="addCarrinho('Café Premium ☕')" style="background: var(--success);">Adicionar</button>
+                    </div>
+                    <div class="product-item">
+                        <div style="font-size: 40px;">🧀</div>
+                        <h3>Queijo Minas</h3>
+                        <button onclick="addCarrinho('Queijo Minas 🧀')" style="background: var(--success);">Adicionar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lado Direito: Carrinho e Histórico (Ocultos até logar) -->
+        <div id="cart-history-section" class="hidden">
+            
+            <div class="card" style="border-left: 4px solid var(--primary);">
+                <h2>🛒 Seu Carrinho</h2>
+                <ul id="cart-items" style="list-style: none; padding: 0; font-size: 15px;"></ul>
+                <p id="empty-cart-msg" style="color: #666; font-size: 14px; text-align: center;">O carrinho está vazio.</p>
+                
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button onclick="limparCarrinho()" style="background: #dc3545; flex: 1;">🗑️ Limpar</button>
+                    <button id="btn-checkout" onclick="fazerCheckout()" style="background: var(--primary); flex: 2;" disabled>💳 Pagar (Assíncrono)</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📦 Meus Pedidos</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Pedido</th>
+                            <th>Itens</th>
+                            <th>Status Pagamento</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-list">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função utilitária para chamar a API
+        const apiPost = async (endpoint, payload) => {
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: payload ? JSON.stringify(payload) : null
+            });
+            return await res.json();
+        };
+
+        // 1. Processo Síncrono de Login
+        async function fazerLogin() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            
+            const data = await apiPost('/login', { username: u, password: p });
+            
+            if (data.token !== "Acesso Negado") {
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('store-section').classList.remove('hidden');
+                document.getElementById('cart-history-section').classList.remove('hidden');
+            } else {
+                document.getElementById('login-error').style.display = 'block';
+            }
+            atualizarStatus();
+        }
+
+        // 2. Processo Síncrono de Adicionar ao Carrinho
+        async function addCarrinho(item) {
+            await apiPost('/cart', { item: item });
+            atualizarStatus();
+        }
+
+        async function limparCarrinho() {
+            await apiPost('/cart/clear');
+            atualizarStatus();
+        }
+
+        // 3. Processo Assíncrono (Gatilho)
+        async function fazerCheckout() {
+            await apiPost('/checkout');
+            atualizarStatus();
+        }
+
+        // Rotina de atualização da Interface
+        async function atualizarStatus() {
+            const response = await fetch('/status');
+            const data = await response.json();
+            
+            // Renderiza Carrinho
+            const cartList = document.getElementById('cart-items');
+            cartList.innerHTML = '';
+            const hasItems = data.db.carrinho.length > 0;
+            
+            document.getElementById('empty-cart-msg').style.display = hasItems ? 'none' : 'block';
+            document.getElementById('btn-checkout').disabled = !hasItems;
+
+            data.db.carrinho.forEach(item => {
+                const li = document.createElement('li');
+                li.style.padding = '8px 0'; li.style.borderBottom = '1px solid #eee'; li.innerText = item;
+                cartList.appendChild(li);
+            });
+
+            // Renderiza Pedidos
+            const ordersList = document.getElementById('orders-list');
+            ordersList.innerHTML = '';
+            Object.keys(data.db.pedidos).reverse().forEach(orderId => {
+                const pedido = data.db.pedidos[orderId];
+                const tr = document.createElement('tr');
+                const statusColor = pedido.status === 'pago_com_sucesso' ? '#28a745' : (pedido.status === 'falha_pagamento' ? '#dc3545' : '#ffc107');
+                
+                tr.innerHTML = `<td><strong>${orderId}</strong></td> <td style="color: #666; font-size: 13px;">${pedido.itens.join(', ')}</td> <td><span style="font-size: 11px; padding: 4px 8px; border-radius: 12px; color: ${pedido.status === 'processando_pagamento' ? 'black' : 'white'}; background: ${statusColor};">${pedido.status.replace(/_/g, ' ').toUpperCase()}</span></td>`;
+                ordersList.appendChild(tr);
+            });
+        }
+
+        setInterval(atualizarStatus, 1000);
+        atualizarStatus();
+    </script>
+</body>
+</html>

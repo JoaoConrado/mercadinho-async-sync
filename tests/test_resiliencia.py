@@ -2,7 +2,7 @@
 Demonstração acadêmica: Timeout, Retry e Fallback
 ==================================================
 
-Implementação de referência: ``src/payment_worker.process_payment``.
+Implementação de referência: ``src/payment_worker.process_payment``....
 
 * **Timeout** — A latência simulada do gateway vem de ``random.uniform(0.5, 2.0)``.
   Se for **maior que 1,5 s**, o código levanta ``TimeoutError`` (gateway lento).

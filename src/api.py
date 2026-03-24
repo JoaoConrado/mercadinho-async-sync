@@ -55,12 +55,15 @@ def api_clear_cart():
     msg = clear_carrinho()
     return {"message": msg, "carrinho": db["carrinho"]}
 
+class CheckoutMode(BaseModel):
+    mode: str = "random"
+
 @app.post("/checkout", summary="Finalizar Pedido (Checkout)", tags=["Checkout"], description="Gera o pedido de forma **síncrona** e o envia para a fila de pagamento **assíncrona** (Background Worker). Retorna a resposta antes do pagamento terminar.")
-async def api_checkout():
+async def api_checkout(data: CheckoutMode = CheckoutMode()):
     # Ação Síncrona inicial (congelar carrinho)
     order_id = checkout()
     # Passagem Assíncrona para background (libera a tela imediatamente)
-    await fila_pagamentos.put(order_id)
+    await fila_pagamentos.put({"order_id": order_id, "mode": data.mode})
     return {"message": f"{order_id} gerado com sucesso.", "status": db["pedidos"][order_id]["status"]}
 
 @app.get("/status", summary="Consultar Status do Sistema", tags=["Monitoramento"], description="Retorna o estado atual do banco de dados fictício (Carrinho e Status do Pedido).")

@@ -2,12 +2,21 @@ import asyncio
 import random
 from src.db import db, save_db
 
-async def process_payment(order_id: str):
+async def process_payment(order_id: str, mode: str = "random"):
     """Tenta processar um pagamento com até 3 retentativas."""
     for attempt in range(3):
         try:
             # Simulador de I/O de Rede com o Gateway de Cartão
             latency = random.uniform(0.5, 2.0)
+            
+            # Overrides de demonstração (Flags do Frontend)
+            if mode == "sucesso":
+                latency = 1.0
+            elif mode == "falha":
+                latency = 2.0
+            elif mode == "retry":
+                latency = 2.0 if attempt < 2 else 1.0
+                
             await asyncio.sleep(latency)
             
             # Pattern de Timeout
@@ -30,6 +39,9 @@ async def process_payment(order_id: str):
 async def payment_worker(queue: asyncio.Queue):
     """Consome a fila de pagamentos em background continuamente."""
     while True:
-        order_id = await queue.get()
-        await process_payment(order_id)
+        task = await queue.get()
+        if isinstance(task, dict):
+            await process_payment(task["order_id"], task.get("mode", "random"))
+        else:
+            await process_payment(task) # Segurança caso receba apenas a string
         queue.task_done()

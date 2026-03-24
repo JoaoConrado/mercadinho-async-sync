@@ -89,9 +89,18 @@
                 <ul id="cart-items" style="list-style: none; padding: 0; font-size: 15px;"></ul>
                 <p id="empty-cart-msg" style="color: #666; font-size: 14px; text-align: center;">O carrinho está vazio.</p>
                 
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button onclick="limparCarrinho()" style="background: #dc3545; flex: 1;">🗑️ Limpar</button>
-                    <button id="btn-checkout" onclick="fazerCheckout()" style="background: var(--primary); flex: 2;" disabled>💳 Pagar (Assíncrono)</button>
+                <div style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">
+                    <label style="font-size: 13px; font-weight: bold; color: #555;">🎮 Modo de Demonstração (Mocks):</label>
+                    <select id="checkout-mode" style="width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px;">
+                        <option value="random">🎲 Aleatório (Padrão)</option>
+                        <option value="sucesso">⚡ Forçar Sucesso Rápido</option>
+                        <option value="retry">⏳ Forçar Retentativas (Salva na 3ª)</option>
+                        <option value="falha">💥 Forçar Falha Crítica (Ativa Fallback)</option>
+                    </select>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="limparCarrinho()" style="background: #dc3545; flex: 1;">🗑️ Limpar</button>
+                        <button id="btn-checkout" onclick="fazerCheckout()" style="background: var(--primary); flex: 2;" disabled>💳 Pagar</button>
+                    </div>
                 </div>
             </div>
 
@@ -153,7 +162,8 @@
 
         // 3. Processo Assíncrono (Gatilho)
         async function fazerCheckout() {
-            await apiPost('/checkout');
+            const mode = document.getElementById('checkout-mode').value;
+            await apiPost('/checkout', { mode: mode });
             atualizarStatus();
         }
 
